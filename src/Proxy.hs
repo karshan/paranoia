@@ -146,9 +146,7 @@ app man logChan hostname port = \request respond -> do
 
 runProxy :: (L.Logger l) => Int -> l -> IO ()
 runProxy port logger = do
-                        Prelude.putStrLn "runProxy"
-                        man <- Client.newManager Client.defaultManagerSettings -- (ClientSSL.opensslManagerSettings SSL.context) --Client.defaultManagerSettings
-                        Prelude.putStrLn "newManager completed"
+                        man <- Client.newManager Client.defaultManagerSettings -- (ClientSSL.opensslManagerSettings SSL.context)
                         hostname <- NBSD.getHostName
                         logChan <- newChan
                         startLogger logger logChan
