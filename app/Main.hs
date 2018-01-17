@@ -5,6 +5,7 @@ import Proxy
 import Control.Applicative
 import Options.Applicative
 import System.Posix.Daemonize (daemonize)
+import Data.Monoid ((<>))
 
 
 

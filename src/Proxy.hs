@@ -125,16 +125,8 @@ processResponse respond req = do res <- try req
                                                                 (Client.responseStatus clientResponse)
                                                                 (fixResponseHeaders (Client.responseHeaders clientResponse))
                                                                 (Client.responseBody clientResponse)
-                                where processResponseEx (Client.StatusCodeException s hs _) = 
-                                            case lookup "X-Response-Body-Start" hs of
-                                                Just body -> respond $ responseLBS s (fixResponseHeaders hs) (fromStrict body)
-                                                Nothing -> respond $ responseLBS s (fixResponseHeaders hs) ""
-                                      processResponseEx (Client.FailedConnectionException host port)  = do 
-                                                                Prelude.putStrLn ("Timeout while connecting to " ++ host ++ ":" ++ (show port))
-                                                                respond $ responseLBS status502 [("Proxy-Agent","paranoia")] "Ohh nouz something went wrong"
-                                      processResponseEx (Client.FailedConnectionException2 host port secure ex)  = do 
-                                                                Prelude.putStrLn ("Failure while connecting to " ++ host ++ ":" ++ (show port) ++ " secure: "++(show secure) ++ "  "++(show ex)) 
-                                                                respond $ responseLBS status502 [("Proxy-Agent","paranoia")] "Ohh nouz something went wrong"
+                                where processResponseEx (Client.HttpExceptionRequest req (Client.StatusCodeException resp resp_body_start)) =
+                                            respond $ responseLBS (Client.responseStatus resp) (Client.responseHeaders resp) (fromStrict resp_body_start)
                                       processResponseEx ex = do Prelude.putStrLn (show ex) 
                                                                 respond $ responseLBS status502 [("Proxy-Agent","paranoia")] "Ohh nouz something went wrong"
 
@@ -154,7 +146,9 @@ app man logChan hostname port = \request respond -> do
 
 runProxy :: (L.Logger l) => Int -> l -> IO ()
 runProxy port logger = do
-                        man <- Client.newManager (ClientSSL.opensslManagerSettings SSL.context) --Client.defaultManagerSettings
+                        Prelude.putStrLn "runProxy"
+                        man <- Client.newManager Client.defaultManagerSettings -- (ClientSSL.opensslManagerSettings SSL.context) --Client.defaultManagerSettings
+                        Prelude.putStrLn "newManager completed"
                         hostname <- NBSD.getHostName
                         logChan <- newChan
                         startLogger logger logChan
